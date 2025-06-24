@@ -4,9 +4,10 @@ var can_fall := false
 
 
 func enter(_msg := {}) -> void:
-	var camera_pos_save := player.camera.get_target_position()
+	var use_modified: bool = SettingsManager.settings_file.get("modified_life_decrement", false)
 	player.dead = true
 	can_fall = false
+	var camera_pos_save := player.camera.get_target_position()
 	player.sprite.show()
 	player.sprite.rotation = 0
 	CoopManager.alive_players.erase(player.player_id)
@@ -23,12 +24,18 @@ func enter(_msg := {}) -> void:
 	player.process_mode = Node.PROCESS_MODE_ALWAYS
 	CoopManager.dead_players[player.player_id] = player
 	if CoopManager.coop_enabled:
-		if CoopManager.alive_players.size() != 0:
-			multi_dead()
+		if use_modified:
+			if CoopManager.alive_players.size() != 0:
+				multi_dead(false)
+			else:
+				end_dead(true)
 		else:
-			end_dead()
+			if CoopManager.alive_players.size() != 0:
+				multi_dead(true)
+			else:
+				end_dead(true)
 	else:
-		end_dead()
+		end_dead(true)
 	player.velocity = Vector2.ZERO
 	await get_tree().create_timer(0.5).timeout
 	player.velocity.y = -200
@@ -42,7 +49,7 @@ func fast_dead() -> void:
 	TransitionManager.death_load()
 	
 
-func end_dead() -> void:
+func end_dead(decrement_life := true) -> void:
 	if player.fast_death:
 		fast_dead()
 		return
@@ -55,7 +62,7 @@ func end_dead() -> void:
 	player.set_power_state(player.small_power_state)
 	await get_tree().physics_frame
 	if GameManager.lives > 1:
-		if GameManager.inf_lives == false:
+		if GameManager.inf_lives == false and decrement_life:
 			GameManager.lives -= 1
 		if GameManager.time <= 0:
 			GameManager.time_out()
@@ -64,9 +71,9 @@ func end_dead() -> void:
 	else:
 		player.game_over()
 
-func multi_dead() -> void:
+func multi_dead(decrement_life := true) -> void:
 	player.play_global_sfx("fast_death")
-	if GameManager.inf_lives == false:
+	if GameManager.inf_lives == false and decrement_life:
 		GameManager.lives -= 1
 	await get_tree().create_timer(3).timeout
 	if GameManager.lives <= 0:

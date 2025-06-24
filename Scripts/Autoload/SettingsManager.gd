@@ -55,6 +55,7 @@ var settings_template := {
 	"music_volume": 0.5,
 	"sfx_volume": 0.5,
 	"ui_volume": 0.5,
+	"modified_life_decrement": false, # false = classic, true = all-players-dead
 	"ground_pound": false,
 	"air_twirl": false,
 	"wall_jump": false,
